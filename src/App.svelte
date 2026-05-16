@@ -1,89 +1,90 @@
-<script>
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from './assets/vite.svg'
-  import heroImg from './assets/hero.png'
-  import Counter from './lib/Counter.svelte'
+<script lang="ts">
+  import Fretboard from './lib/Fretboard.svelte';
+  import Settings from './lib/Settings.svelte';
+  import { STANDARD_TUNING, type Note } from './lib/music';
+
+  let showNotes = $state(false);
+  let frets = $state(24);
+  let tuning = $state<Note[]>([...STANDARD_TUNING]);
+  let settingsOpen = $state(false);
 </script>
 
-<section id="center">
-  <div class="hero">
-    <img src={heroImg} class="base" width="170" height="179" alt="" />
-    <img src={svelteLogo} class="framework" alt="Svelte logo" />
-    <img src={viteLogo} class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/App.svelte</code> and save to test <code>HMR</code></p>
-  </div>
-  <Counter />
-</section>
+<main>
+  <header>
+    <h1>FretRecall</h1>
+    <div class="controls">
+      <label>
+        <input type="checkbox" bind:checked={showNotes} />
+        Show notes
+      </label>
+      <button class="gear" onclick={() => (settingsOpen = true)} aria-label="Open settings">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M19.14 12.94a7.05 7.05 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7 7 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.88 2h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7 7 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L2.63 8.48a.5.5 0 0 0 .12.64l2.03 1.58a7.05 7.05 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96a7 7 0 0 0 1.63.94l.36 2.54c.05.25.26.42.5.42h3.84c.24 0 .45-.17.5-.42l.36-2.54a7 7 0 0 0 1.63-.94l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
+          />
+        </svg>
+        Settings
+      </button>
+    </div>
+  </header>
 
-<div class="ticks"></div>
+  <Fretboard {frets} {tuning} {showNotes} />
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#documentation-icon"></use>
-    </svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank" rel="noreferrer">
-          <img class="logo" src={viteLogo} alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://svelte.dev/" target="_blank" rel="noreferrer">
-          <img class="button-icon" src={svelteLogo} alt="" />
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#social-icon"></use>
-    </svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li>
-        <a href="https://github.com/vitejs/vite" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#github-icon"></use>
-          </svg>
-          GitHub
-        </a>
-      </li>
-      <li>
-        <a href="https://chat.vite.dev/" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#discord-icon"></use>
-          </svg>
-          Discord
-        </a>
-      </li>
-      <li>
-        <a href="https://x.com/vite_js" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#x-icon"></use>
-          </svg>
-          X.com
-        </a>
-      </li>
-      <li>
-        <a href="https://bsky.app/profile/vite.dev" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#bluesky-icon"></use>
-          </svg>
-          Bluesky
-        </a>
-      </li>
-    </ul>
-  </div>
-</section>
+  <Settings
+    open={settingsOpen}
+    {frets}
+    {tuning}
+    onClose={() => (settingsOpen = false)}
+    onFretsChange={(n) => (frets = n)}
+    onTuningChange={(t) => (tuning = t)}
+  />
+</main>
 
-<div class="ticks"></div>
-<section id="spacer"></section>
+<style>
+  main {
+    padding: 1.5rem 1rem;
+    width: 100%;
+    margin: 0 auto;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+  }
+  .controls {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    font-size: 0.9rem;
+  }
+  .controls label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .gear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #2a2a30;
+    color: #ddd;
+    border: 1px solid #3a3a42;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .gear:hover {
+    background: #34343c;
+    border-color: #4a4a55;
+  }
+</style>
