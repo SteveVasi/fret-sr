@@ -1,20 +1,13 @@
 <script lang="ts">
   import Fretboard from './lib/Fretboard.svelte';
-  import Settings from './lib/Settings.svelte';
+  import SettingsPanel from './lib/SettingsPanel.svelte';
   import TrainingHUD from './lib/TrainingHUD.svelte';
   import TargetDisplay from './lib/TargetDisplay.svelte';
-  import { STANDARD_TUNING, type Note } from './lib/music';
+  import { settings } from './lib/settings.svelte';
   import { TrainingSession } from './lib/training.svelte';
 
-  let showNotes = $state(false);
-  let frets = $state(12);
-  let tuning = $state<Note[]>([...STANDARD_TUNING]);
   let settingsOpen = $state(false);
-
-  const session = new TrainingSession(
-    () => tuning,
-    () => frets,
-  );
+  const session = new TrainingSession(settings);
 </script>
 
 <main>
@@ -22,7 +15,7 @@
     <h1>FretRecall</h1>
     <div class="controls">
       <label>
-        <input type="checkbox" bind:checked={showNotes} />
+        <input type="checkbox" bind:checked={settings.showNotes} />
         Show notes
       </label>
       {#if session.status !== 'idle'}
@@ -41,29 +34,18 @@
   </header>
 
   <Fretboard
-    {frets}
-    {tuning}
-    {showNotes}
+    frets={settings.frets}
+    tuning={settings.tuning}
+    showNotes={settings.showNotes}
     highlightString={session.status !== 'idle' ? (session.target?.stringIdx ?? null) : null}
     reveal={session.reveal}
   />
 
   <TrainingHUD {session} />
 
-  <TargetDisplay {session} {tuning} onStart={() => session.start()} />
+  <TargetDisplay {session} tuning={settings.tuning} onStart={() => session.start()} />
 
-  <Settings
-    open={settingsOpen}
-    {frets}
-    {tuning}
-    timeLimit={session.timeLimit}
-    soundEnabled={session.soundEnabled}
-    onClose={() => (settingsOpen = false)}
-    onFretsChange={(n) => (frets = n)}
-    onTuningChange={(t) => (tuning = t)}
-    onTimeLimitChange={(s) => (session.timeLimit = s)}
-    onSoundToggle={(v) => (session.soundEnabled = v)}
-  />
+  <SettingsPanel open={settingsOpen} onClose={() => (settingsOpen = false)} />
 </main>
 
 <style>

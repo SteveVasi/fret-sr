@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TrainingSession } from './training.svelte';
+  import { settings } from './settings.svelte';
 
   type Props = {
     session: TrainingSession;
@@ -8,7 +9,7 @@
   let { session }: Props = $props();
 
   const progress = $derived(
-    session.timeLimit > 0 ? (session.timeLeft / session.timeLimit) * 100 : 0,
+    settings.timeLimit > 0 ? (session.timeLeft / settings.timeLimit) * 100 : 0,
   );
 </script>
 

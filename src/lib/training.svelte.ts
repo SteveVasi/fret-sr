@@ -1,5 +1,6 @@
 import { type Note, pickRandomTarget, fretsForNoteOnString, midiAtFret } from './music';
 import { playMidi } from './audio';
+import type { Settings } from './settings.svelte';
 
 export type Target = { stringIdx: number; note: Note };
 export type Status = 'idle' | 'asking' | 'reveal';
@@ -12,18 +13,14 @@ export class TrainingSession {
   target = $state<Target | null>(null);
   timeLeft = $state(0);
   reveal = $state<RevealCell[] | null>(null);
-  timeLimit = $state(5);
-  soundEnabled = $state(true);
 
   #rafId = 0;
   #advanceTimer = 0;
   #questionStart = 0;
-  #getTuning: () => Note[];
-  #getFrets: () => number;
+  #settings: Settings;
 
-  constructor(getTuning: () => Note[], getFrets: () => number) {
-    this.#getTuning = getTuning;
-    this.#getFrets = getFrets;
+  constructor(settings: Settings) {
+    this.#settings = settings;
   }
 
   start() {
@@ -39,18 +36,18 @@ export class TrainingSession {
   }
 
   #next() {
-    this.target = pickRandomTarget(this.#getTuning(), this.#getFrets());
+    this.target = pickRandomTarget(this.#settings.tuning, this.#settings.frets);
     this.status = 'asking';
     this.reveal = null;
     this.#questionStart = performance.now();
-    this.timeLeft = this.timeLimit;
+    this.timeLeft = this.#settings.timeLimit;
     this.#rafId = requestAnimationFrame(this.#tick);
   }
 
   #tick = () => {
     if (this.status !== 'asking') return;
     const elapsed = (performance.now() - this.#questionStart) / 1000;
-    this.timeLeft = Math.max(0, this.timeLimit - elapsed);
+    this.timeLeft = Math.max(0, this.#settings.timeLimit - elapsed);
     if (this.timeLeft <= 0) {
       this.#showReveal();
       return;
@@ -60,11 +57,11 @@ export class TrainingSession {
 
   #showReveal() {
     if (!this.target) return;
-    const openNote = this.#getTuning()[this.target.stringIdx];
-    const frets = fretsForNoteOnString(openNote, this.target.note, this.#getFrets());
+    const openNote = this.#settings.tuning[this.target.stringIdx];
+    const frets = fretsForNoteOnString(openNote, this.target.note, this.#settings.frets);
     this.reveal = frets.map((f) => ({ string: this.target!.stringIdx, fret: f }));
     this.status = 'reveal';
-    if (this.soundEnabled && frets.length > 0) {
+    if (this.#settings.soundEnabled && frets.length > 0) {
       playMidi(midiAtFret(this.target.stringIdx, openNote, frets[0]));
     }
     clearTimeout(this.#advanceTimer);

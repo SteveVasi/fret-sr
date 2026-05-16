@@ -1,31 +1,13 @@
 <script lang="ts">
   import { NOTES, type Note, TUNING_PRESETS, EXTENDED_STANDARD } from './music';
+  import { settings } from './settings.svelte';
 
   type Props = {
     open: boolean;
-    frets: number;
-    tuning: Note[];
-    timeLimit: number;
-    soundEnabled: boolean;
     onClose: () => void;
-    onFretsChange: (n: number) => void;
-    onTuningChange: (t: Note[]) => void;
-    onTimeLimitChange: (s: number) => void;
-    onSoundToggle: (enabled: boolean) => void;
   };
 
-  let {
-    open,
-    frets,
-    tuning,
-    timeLimit,
-    soundEnabled,
-    onClose,
-    onFretsChange,
-    onTuningChange,
-    onTimeLimitChange,
-    onSoundToggle,
-  }: Props = $props();
+  let { open, onClose }: Props = $props();
 
   const MIN_STRINGS = 1;
   const MAX_STRINGS = 12;
@@ -35,28 +17,27 @@
   const MAX_TIME = 15;
 
   function setStringCount(count: number) {
-    if (count === tuning.length) return;
-    if (count > tuning.length) {
-      // Fill new low strings from the extended standard template, so going
-      // 6 → 4 → 6 restores E B G D A E (not the current last string repeated).
+    const current = settings.tuning;
+    if (count === current.length) return;
+    if (count > current.length) {
       const added: Note[] = [];
-      for (let i = tuning.length; i < count; i++) {
+      for (let i = current.length; i < count; i++) {
         added.push(EXTENDED_STANDARD[i] ?? EXTENDED_STANDARD[EXTENDED_STANDARD.length - 1]);
       }
-      onTuningChange([...tuning, ...added]);
+      settings.tuning = [...current, ...added];
     } else {
-      onTuningChange(tuning.slice(0, count));
+      settings.tuning = current.slice(0, count);
     }
   }
 
   function setStringNote(stringIdx: number, note: Note) {
-    const next = [...tuning];
+    const next = [...settings.tuning];
     next[stringIdx] = note;
-    onTuningChange(next);
+    settings.tuning = next;
   }
 
   function applyPreset(preset: Note[]) {
-    onTuningChange([...preset]);
+    settings.tuning = [...preset];
   }
 </script>
 
@@ -79,29 +60,29 @@
     <section>
       <div class="row">
         <span>Frets</span>
-        <span class="value">{frets}</span>
+        <span class="value">{settings.frets}</span>
       </div>
       <input
         type="range"
         aria-label="Frets"
         min={MIN_FRETS}
         max={MAX_FRETS}
-        value={frets}
-        oninput={(e) => onFretsChange(+e.currentTarget.value)}
+        value={settings.frets}
+        oninput={(e) => (settings.frets = +e.currentTarget.value)}
       />
     </section>
 
     <section>
       <div class="row">
         <span>Strings</span>
-        <span class="value">{tuning.length}</span>
+        <span class="value">{settings.tuning.length}</span>
       </div>
       <input
         type="range"
         aria-label="String count"
         min={MIN_STRINGS}
         max={MAX_STRINGS}
-        value={tuning.length}
+        value={settings.tuning.length}
         oninput={(e) => setStringCount(+e.currentTarget.value)}
       />
     </section>
@@ -109,7 +90,7 @@
     <section>
       <h3>Tuning <span class="hint">high → low</span></h3>
       <div class="tuning-grid">
-        {#each tuning as note, i}
+        {#each settings.tuning as note, i}
           <label class="string-row">
             <span class="string-idx">{i + 1}</span>
             <select
@@ -128,15 +109,15 @@
     <section>
       <div class="row">
         <span>Time limit</span>
-        <span class="value">{timeLimit}s</span>
+        <span class="value">{settings.timeLimit}s</span>
       </div>
       <input
         type="range"
         aria-label="Time limit per question (seconds)"
         min={MIN_TIME}
         max={MAX_TIME}
-        value={timeLimit}
-        oninput={(e) => onTimeLimitChange(+e.currentTarget.value)}
+        value={settings.timeLimit}
+        oninput={(e) => (settings.timeLimit = +e.currentTarget.value)}
       />
     </section>
 
@@ -144,8 +125,8 @@
       <label class="toggle">
         <input
           type="checkbox"
-          checked={soundEnabled}
-          onchange={(e) => onSoundToggle(e.currentTarget.checked)}
+          checked={settings.soundEnabled}
+          onchange={(e) => (settings.soundEnabled = e.currentTarget.checked)}
         />
         <span>Play sound on reveal</span>
       </label>
