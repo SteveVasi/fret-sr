@@ -1,4 +1,5 @@
-import { type Note, pickRandomTarget, fretsForNoteOnString } from './music';
+import { type Note, pickRandomTarget, fretsForNoteOnString, midiAtFret } from './music';
+import { playMidi } from './audio';
 
 export type Target = { stringIdx: number; note: Note };
 export type Status = 'idle' | 'asking' | 'reveal';
@@ -12,6 +13,7 @@ export class TrainingSession {
   timeLeft = $state(0);
   reveal = $state<RevealCell[] | null>(null);
   timeLimit = $state(5);
+  soundEnabled = $state(true);
 
   #rafId = 0;
   #advanceTimer = 0;
@@ -62,6 +64,9 @@ export class TrainingSession {
     const frets = fretsForNoteOnString(openNote, this.target.note, this.#getFrets());
     this.reveal = frets.map((f) => ({ string: this.target!.stringIdx, fret: f }));
     this.status = 'reveal';
+    if (this.soundEnabled && frets.length > 0) {
+      playMidi(midiAtFret(this.target.stringIdx, openNote, frets[0]));
+    }
     clearTimeout(this.#advanceTimer);
     this.#advanceTimer = setTimeout(() => {
       if (this.status === 'reveal') this.#next();

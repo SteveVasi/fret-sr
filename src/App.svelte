@@ -7,7 +7,7 @@
   import { TrainingSession } from './lib/training.svelte';
 
   let showNotes = $state(false);
-  let frets = $state(24);
+  let frets = $state(12);
   let tuning = $state<Note[]>([...STANDARD_TUNING]);
   let settingsOpen = $state(false);
 
@@ -57,10 +57,12 @@
     {frets}
     {tuning}
     timeLimit={session.timeLimit}
+    soundEnabled={session.soundEnabled}
     onClose={() => (settingsOpen = false)}
     onFretsChange={(n) => (frets = n)}
     onTuningChange={(t) => (tuning = t)}
     onTimeLimitChange={(s) => (session.timeLimit = s)}
+    onSoundToggle={(v) => (session.soundEnabled = v)}
   />
 </main>
 

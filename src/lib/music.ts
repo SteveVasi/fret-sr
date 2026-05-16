@@ -14,6 +14,25 @@ export const EXTENDED_STANDARD: Note[] = [
   'B', 'F#', 'C#', 'G#', 'D#', 'A#',
 ];
 
+/**
+ * Approximate octave per string index, matching standard guitar pitches
+ * (E4, B3, G3, D3, A2, E2 for strings 1–6). Lower strings extrapolate.
+ * Only used to give audio playback a sensible register — exact pitch
+ * for non-standard tunings may drift.
+ */
+const STRING_OCTAVE = [4, 3, 3, 3, 2, 2, 1, 1, 1, 0, 0, 0];
+
+/** MIDI number for a note + octave. C-1 = 0, C4 = 60, A4 = 69. */
+export function midiOf(note: Note, octave: number): number {
+  return (octave + 1) * 12 + NOTES.indexOf(note);
+}
+
+/** MIDI for a note played at a given fret on string `stringIdx`. */
+export function midiAtFret(stringIdx: number, openNote: Note, fret: number): number {
+  const octave = STRING_OCTAVE[stringIdx] ?? STRING_OCTAVE[STRING_OCTAVE.length - 1];
+  return midiOf(openNote, octave) + fret;
+}
+
 export const TUNING_PRESETS: { name: string; tuning: Note[] }[] = [
   { name: 'Standard (6)', tuning: ['E', 'B', 'G', 'D', 'A', 'E'] },
   { name: 'Drop D (6)', tuning: ['E', 'B', 'G', 'D', 'A', 'D'] },

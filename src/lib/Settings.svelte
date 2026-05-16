@@ -6,10 +6,12 @@
     frets: number;
     tuning: Note[];
     timeLimit: number;
+    soundEnabled: boolean;
     onClose: () => void;
     onFretsChange: (n: number) => void;
     onTuningChange: (t: Note[]) => void;
     onTimeLimitChange: (s: number) => void;
+    onSoundToggle: (enabled: boolean) => void;
   };
 
   let {
@@ -17,10 +19,12 @@
     frets,
     tuning,
     timeLimit,
+    soundEnabled,
     onClose,
     onFretsChange,
     onTuningChange,
     onTimeLimitChange,
+    onSoundToggle,
   }: Props = $props();
 
   const MIN_STRINGS = 1;
@@ -134,6 +138,17 @@
         value={timeLimit}
         oninput={(e) => onTimeLimitChange(+e.currentTarget.value)}
       />
+    </section>
+
+    <section>
+      <label class="toggle">
+        <input
+          type="checkbox"
+          checked={soundEnabled}
+          onchange={(e) => onSoundToggle(e.currentTarget.checked)}
+        />
+        <span>Play sound on reveal</span>
+      </label>
     </section>
 
     <section>
@@ -268,5 +283,12 @@
   .preset:hover {
     background: #34343c;
     border-color: #4a4a55;
+  }
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.95rem;
+    cursor: pointer;
   }
 </style>
