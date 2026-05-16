@@ -1,28 +1,44 @@
 <script lang="ts">
-  import { NOTES, type Note, TUNING_PRESETS } from './music';
+  import { NOTES, type Note, TUNING_PRESETS, EXTENDED_STANDARD } from './music';
 
   type Props = {
     open: boolean;
     frets: number;
     tuning: Note[];
+    timeLimit: number;
     onClose: () => void;
     onFretsChange: (n: number) => void;
     onTuningChange: (t: Note[]) => void;
+    onTimeLimitChange: (s: number) => void;
   };
 
-  let { open, frets, tuning, onClose, onFretsChange, onTuningChange }: Props = $props();
+  let {
+    open,
+    frets,
+    tuning,
+    timeLimit,
+    onClose,
+    onFretsChange,
+    onTuningChange,
+    onTimeLimitChange,
+  }: Props = $props();
 
   const MIN_STRINGS = 1;
   const MAX_STRINGS = 12;
   const MIN_FRETS = 5;
   const MAX_FRETS = 24;
+  const MIN_TIME = 2;
+  const MAX_TIME = 15;
 
   function setStringCount(count: number) {
     if (count === tuning.length) return;
     if (count > tuning.length) {
-      // Add a low string (bottom of the array, since array is high → low)
-      const last = tuning[tuning.length - 1] ?? 'E';
-      const added = Array(count - tuning.length).fill(last);
+      // Fill new low strings from the extended standard template, so going
+      // 6 → 4 → 6 restores E B G D A E (not the current last string repeated).
+      const added: Note[] = [];
+      for (let i = tuning.length; i < count; i++) {
+        added.push(EXTENDED_STANDARD[i] ?? EXTENDED_STANDARD[EXTENDED_STANDARD.length - 1]);
+      }
       onTuningChange([...tuning, ...added]);
     } else {
       onTuningChange(tuning.slice(0, count));
@@ -103,6 +119,21 @@
           </label>
         {/each}
       </div>
+    </section>
+
+    <section>
+      <div class="row">
+        <span>Time limit</span>
+        <span class="value">{timeLimit}s</span>
+      </div>
+      <input
+        type="range"
+        aria-label="Time limit per question (seconds)"
+        min={MIN_TIME}
+        max={MAX_TIME}
+        value={timeLimit}
+        oninput={(e) => onTimeLimitChange(+e.currentTarget.value)}
+      />
     </section>
 
     <section>

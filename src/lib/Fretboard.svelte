@@ -1,11 +1,15 @@
 <script lang="ts">
   import { type Note, STANDARD_TUNING, noteAt } from './music';
 
+  type RevealCell = { string: number; fret: number };
+
   type Props = {
     frets?: number;
     tuning?: Note[];
     scaleLength?: number;
     showNotes?: boolean;
+    highlightString?: number | null;
+    reveal?: RevealCell[] | null;
   };
 
   const SINGLE_INLAYS = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
@@ -16,7 +20,12 @@
     tuning = STANDARD_TUNING, // top → bottom
     scaleLength = 2000,
     showNotes = true,
+    highlightString = null,
+    reveal = null,
   }: Props = $props();
+
+  const isRevealed = (s: number, f: number) =>
+    reveal?.some((c) => c.string === s && c.fret === f) ?? false;
 
   // Layout constants (SVG units)
   const NUT_WIDTH = 18;
@@ -24,6 +33,7 @@
   const STRING_SPACING = 72;
   const LABEL_STRIP = 32;
   const DOT_RADIUS = 18;
+  const REVEAL_RADIUS = 30;
   const HIT_SIZE = 44;
 
   // Derived geometry
@@ -99,15 +109,42 @@
 
     <!-- Strings + open-string labels -->
     {#each tuning as openNote, s}
+      {@const isHl = highlightString === s}
+      {#if isHl}
+        <line
+          x1={PAD.left}
+          x2={scaleLength - PAD.right}
+          y1={stringY(s)}
+          y2={stringY(s)}
+          stroke="#ffcf5c"
+          stroke-width={stringThickness(s) + 28}
+          stroke-opacity="0.18"
+        />
+        <line
+          x1={PAD.left}
+          x2={scaleLength - PAD.right}
+          y1={stringY(s)}
+          y2={stringY(s)}
+          stroke="#ffcf5c"
+          stroke-width={stringThickness(s) + 14}
+          stroke-opacity="0.4"
+        />
+      {/if}
       <line
         x1={PAD.left}
         x2={scaleLength - PAD.right}
         y1={stringY(s)}
         y2={stringY(s)}
-        stroke="#d8d4c4"
-        stroke-width={stringThickness(s)}
+        stroke={isHl ? '#ffd87a' : '#d8d4c4'}
+        stroke-width={stringThickness(s) + (isHl ? 7 : 0)}
       />
-      <text class="open-label" x={PAD.left - 12} y={stringY(s) + 6} text-anchor="end">
+      <text
+        class="open-label"
+        class:hl={isHl}
+        x={PAD.left - 14}
+        y={stringY(s) + (isHl ? 13 : 8)}
+        text-anchor="end"
+      >
         {openNote}
       </text>
     {/each}
@@ -119,30 +156,43 @@
         {@const note = noteAt(openNote, f)}
         {@const isHovered = hovered?.string === s && hovered?.fret === f}
         {@const isOpen = note === openNote}
-        {@const visible = showNotes || isHovered}
+        {@const revealed = isRevealed(s, f)}
+        {@const visible = showNotes || isHovered || revealed}
         <g
-          role="button"
-          tabindex="0"
-          aria-label={`String ${s + 1}, fret ${f}, note ${note}`}
           onmouseenter={() => (hovered = { string: s, fret: f })}
           onmouseleave={() => (hovered = null)}
+          aria-hidden="true"
         >
+          <rect
+            x={midX(f) - HIT_SIZE / 2}
+            y={stringY(s) - HIT_SIZE / 2}
+            width={HIT_SIZE}
+            height={HIT_SIZE}
+            fill="transparent"
+          />
           {#if visible}
             <circle
               cx={midX(f)}
               cy={stringY(s)}
-              r={DOT_RADIUS}
-              fill={isHovered ? '#ffcf5c' : isOpen ? '#7ec0ff' : '#222'}
-              fill-opacity={isHovered ? 1 : 0.85}
-              stroke={isHovered ? '#7a5200' : '#0a0a0a'}
-              stroke-width="1.5"
+              r={revealed ? REVEAL_RADIUS : DOT_RADIUS}
+              fill={revealed
+                ? '#5cd97f'
+                : isHovered
+                  ? '#ffcf5c'
+                  : isOpen
+                    ? '#7ec0ff'
+                    : '#222'}
+              fill-opacity={isHovered || revealed ? 1 : 0.85}
+              stroke="#0a0a0a"
+              stroke-width={revealed ? 2.5 : 1.5}
             />
             <text
               class="note-label"
+              class:reveal={revealed}
               x={midX(f)}
-              y={stringY(s) + 6}
+              y={stringY(s) + (revealed ? 10 : 6)}
               text-anchor="middle"
-              fill={isHovered ? '#222' : '#fff'}
+              fill={revealed || isHovered ? '#222' : '#fff'}
             >
               {note}
             </text>
@@ -169,16 +219,22 @@
     fill: #aaa;
   }
   .open-label {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 28px;
+    font-weight: 700;
     fill: #ddd;
+  }
+  .open-label.hl {
+    font-size: 44px;
+    font-weight: 800;
+    fill: #ffd87a;
   }
   .note-label {
     font-size: 17px;
     font-weight: 700;
     pointer-events: none;
   }
-  g[role='button'] {
-    cursor: pointer;
+  .note-label.reveal {
+    font-size: 28px;
+    font-weight: 800;
   }
 </style>

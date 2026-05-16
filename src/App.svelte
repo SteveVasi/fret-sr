@@ -1,12 +1,20 @@
 <script lang="ts">
   import Fretboard from './lib/Fretboard.svelte';
   import Settings from './lib/Settings.svelte';
+  import TrainingHUD from './lib/TrainingHUD.svelte';
+  import TargetDisplay from './lib/TargetDisplay.svelte';
   import { STANDARD_TUNING, type Note } from './lib/music';
+  import { TrainingSession } from './lib/training.svelte';
 
   let showNotes = $state(false);
   let frets = $state(24);
   let tuning = $state<Note[]>([...STANDARD_TUNING]);
   let settingsOpen = $state(false);
+
+  const session = new TrainingSession(
+    () => tuning,
+    () => frets,
+  );
 </script>
 
 <main>
@@ -17,6 +25,9 @@
         <input type="checkbox" bind:checked={showNotes} />
         Show notes
       </label>
+      {#if session.status !== 'idle'}
+        <button class="stop" onclick={() => session.stop()}>Stop</button>
+      {/if}
       <button class="gear" onclick={() => (settingsOpen = true)} aria-label="Open settings">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path
@@ -29,15 +40,27 @@
     </div>
   </header>
 
-  <Fretboard {frets} {tuning} {showNotes} />
+  <Fretboard
+    {frets}
+    {tuning}
+    {showNotes}
+    highlightString={session.status !== 'idle' ? (session.target?.stringIdx ?? null) : null}
+    reveal={session.reveal}
+  />
+
+  <TrainingHUD {session} />
+
+  <TargetDisplay {session} {tuning} onStart={() => session.start()} />
 
   <Settings
     open={settingsOpen}
     {frets}
     {tuning}
+    timeLimit={session.timeLimit}
     onClose={() => (settingsOpen = false)}
     onFretsChange={(n) => (frets = n)}
     onTuningChange={(t) => (tuning = t)}
+    onTimeLimitChange={(s) => (session.timeLimit = s)}
   />
 </main>
 
@@ -86,5 +109,20 @@
   .gear:hover {
     background: #34343c;
     border-color: #4a4a55;
+  }
+  .stop {
+    background: #3a2a2a;
+    color: #ffb0b0;
+    border: 1px solid #5a3a3a;
+    border-radius: 6px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .stop:hover {
+    background: #4a3434;
+    border-color: #7a4848;
   }
 </style>
