@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TrainingSession } from './training.svelte';
   import type { Note } from './music';
+  import Button from './Button.svelte';
 
   type Props = {
     session: TrainingSession;
@@ -17,7 +18,7 @@
 
 <div class="wrap">
   {#if session.status === 'idle'}
-    <button class="start" onclick={onStart}>Start training</button>
+    <Button variant="primary" size="lg" onclick={onStart}>Start training</Button>
   {:else if session.target}
     <div class="target">
       <div class="note">{session.target.note}</div>
@@ -74,25 +75,5 @@
     line-height: 1;
     letter-spacing: -0.02em;
     margin-left: 0.4rem;
-  }
-  .start {
-    background: #7ec0ff;
-    color: #0a1828;
-    border: none;
-    border-radius: 10px;
-    padding: 1.5rem 3rem;
-    font-size: 2rem;
-    font-weight: 800;
-    cursor: pointer;
-    font-family: inherit;
-    box-shadow: 0 4px 16px rgba(126, 192, 255, 0.25);
-    transition: transform 0.1s, background 0.15s;
-  }
-  .start:hover {
-    background: #a3d3ff;
-    transform: translateY(-1px);
-  }
-  .start:active {
-    transform: translateY(0);
   }
 </style>

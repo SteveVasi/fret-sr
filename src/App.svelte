@@ -3,11 +3,20 @@
   import SettingsPanel from './lib/SettingsPanel.svelte';
   import TrainingHUD from './lib/TrainingHUD.svelte';
   import TargetDisplay from './lib/TargetDisplay.svelte';
+  import Button from './lib/Button.svelte';
   import { settings } from './lib/settings.svelte';
   import { TrainingSession } from './lib/training.svelte';
+  import { GEAR_ICON } from './lib/icons';
 
   let settingsOpen = $state(false);
   const session = new TrainingSession(settings);
+
+  const onFretboardSelect = $derived(
+    settings.clickMode && session.status === 'asking'
+      ? (s: number, f: number, n: Parameters<typeof session.answer>[2]) =>
+          session.answer(s, f, n)
+      : undefined,
+  );
 </script>
 
 <main>
@@ -19,17 +28,14 @@
         Show notes
       </label>
       {#if session.status !== 'idle'}
-        <button class="stop" onclick={() => session.stop()}>Stop</button>
+        <Button variant="danger" size="sm" onclick={() => session.stop()}>Stop</Button>
       {/if}
-      <button class="gear" onclick={() => (settingsOpen = true)} aria-label="Open settings">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M19.14 12.94a7.05 7.05 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7 7 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.88 2h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7 7 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L2.63 8.48a.5.5 0 0 0 .12.64l2.03 1.58a7.05 7.05 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96a7 7 0 0 0 1.63.94l.36 2.54c.05.25.26.42.5.42h3.84c.24 0 .45-.17.5-.42l.36-2.54a7 7 0 0 0 1.63-.94l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
-          />
+      <Button variant="secondary" size="sm" onclick={() => (settingsOpen = true)} ariaLabel="Open settings">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path fill="currentColor" d={GEAR_ICON} />
         </svg>
         Settings
-      </button>
+      </Button>
     </div>
   </header>
 
@@ -37,8 +43,11 @@
     frets={settings.frets}
     tuning={settings.tuning}
     showNotes={settings.showNotes}
+    hoverHints={settings.showHoverHints}
     highlightString={session.status !== 'idle' ? (session.target?.stringIdx ?? null) : null}
     reveal={session.reveal}
+    feedback={session.feedback}
+    onSelect={onFretboardSelect}
   />
 
   <TrainingHUD {session} />
@@ -68,7 +77,7 @@
   }
   .controls {
     display: flex;
-    gap: 1.25rem;
+    gap: 0.75rem;
     align-items: center;
     font-size: 0.9rem;
   }
@@ -76,37 +85,5 @@
     display: flex;
     gap: 0.5rem;
     align-items: center;
-  }
-  .gear {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #2a2a30;
-    color: #ddd;
-    border: 1px solid #3a3a42;
-    border-radius: 6px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .gear:hover {
-    background: #34343c;
-    border-color: #4a4a55;
-  }
-  .stop {
-    background: #3a2a2a;
-    color: #ffb0b0;
-    border: 1px solid #5a3a3a;
-    border-radius: 6px;
-    padding: 0.4rem 0.9rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .stop:hover {
-    background: #4a3434;
-    border-color: #7a4848;
   }
 </style>

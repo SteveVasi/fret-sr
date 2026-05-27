@@ -1,6 +1,7 @@
 <script lang="ts">
   import { NOTES, type Note, TUNING_PRESETS, EXTENDED_STANDARD } from './music';
   import { settings } from './settings.svelte';
+  import Button from './Button.svelte';
 
   type Props = {
     open: boolean;
@@ -54,7 +55,7 @@
   <div class="panel" role="dialog" aria-modal="true" aria-label="Fretboard settings">
     <header>
       <h2>Settings</h2>
-      <button class="close" onclick={onClose} aria-label="Close">×</button>
+      <Button variant="ghost" size="sm" onclick={onClose} ariaLabel="Close">×</Button>
     </header>
 
     <section>
@@ -125,6 +126,31 @@
       <label class="toggle">
         <input
           type="checkbox"
+          checked={settings.clickMode}
+          onchange={(e) => (settings.clickMode = e.currentTarget.checked)}
+        />
+        <span>Click on fretboard to answer</span>
+      </label>
+      <p class="hint-text">
+        When off, just play the note on your real guitar and wait for the reveal.
+      </p>
+    </section>
+
+    <section>
+      <label class="toggle">
+        <input
+          type="checkbox"
+          checked={settings.showHoverHints}
+          onchange={(e) => (settings.showHoverHints = e.currentTarget.checked)}
+        />
+        <span>Reveal note on hover</span>
+      </label>
+    </section>
+
+    <section>
+      <label class="toggle">
+        <input
+          type="checkbox"
           checked={settings.soundEnabled}
           onchange={(e) => (settings.soundEnabled = e.currentTarget.checked)}
         />
@@ -136,9 +162,9 @@
       <h3>Presets</h3>
       <div class="presets">
         {#each TUNING_PRESETS as preset}
-          <button class="preset" onclick={() => applyPreset(preset.tuning)}>
-            {preset.name}
-          </button>
+          <Button variant="secondary" size="sm" onclick={() => applyPreset(preset.tuning)}>
+            <span class="preset-name">{preset.name}</span>
+          </Button>
         {/each}
       </div>
     </section>
@@ -193,18 +219,6 @@
     color: #777;
     font-size: 0.8rem;
   }
-  .close {
-    background: transparent;
-    color: #aaa;
-    border: none;
-    font-size: 1.6rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0 0.25rem;
-  }
-  .close:hover {
-    color: #fff;
-  }
   section {
     margin-bottom: 1.5rem;
   }
@@ -249,21 +263,13 @@
   .presets {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
   }
-  .preset {
+  .presets :global(.btn) {
+    justify-content: flex-start;
+  }
+  .preset-name {
     text-align: left;
-    background: #2a2a30;
-    color: #ddd;
-    border: 1px solid #3a3a42;
-    border-radius: 4px;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
-  .preset:hover {
-    background: #34343c;
-    border-color: #4a4a55;
   }
   .toggle {
     display: flex;
@@ -271,5 +277,11 @@
     gap: 0.6rem;
     font-size: 0.95rem;
     cursor: pointer;
+  }
+  .hint-text {
+    margin: 0.4rem 0 0 1.85rem;
+    font-size: 0.8rem;
+    color: #888;
+    line-height: 1.3;
   }
 </style>

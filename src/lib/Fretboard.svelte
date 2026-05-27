@@ -2,14 +2,18 @@
   import { type Note, STANDARD_TUNING, noteAt } from './music';
 
   type RevealCell = { string: number; fret: number };
+  type Feedback = { string: number; fret: number; kind: 'correct' | 'wrong' };
 
   type Props = {
     frets?: number;
     tuning?: Note[];
     scaleLength?: number;
     showNotes?: boolean;
+    hoverHints?: boolean;
     highlightString?: number | null;
     reveal?: RevealCell[] | null;
+    feedback?: Feedback | null;
+    onSelect?: (stringIdx: number, fret: number, note: Note) => void;
   };
 
   const SINGLE_INLAYS = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
@@ -20,8 +24,11 @@
     tuning = STANDARD_TUNING, // top → bottom
     scaleLength = 2000,
     showNotes = true,
+    hoverHints = false,
     highlightString = null,
     reveal = null,
+    feedback = null,
+    onSelect,
   }: Props = $props();
 
   const isRevealed = (s: number, f: number) =>
@@ -157,11 +164,22 @@
         {@const isHovered = hovered?.string === s && hovered?.fret === f}
         {@const isOpen = note === openNote}
         {@const revealed = isRevealed(s, f)}
-        {@const visible = showNotes || isHovered || revealed}
+        {@const fb = feedback?.string === s && feedback?.fret === f ? feedback.kind : null}
+        {@const clickable = !!onSelect}
+        {@const visible = showNotes || (hoverHints && isHovered) || revealed || fb !== null}
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
         <g
+          class:clickable
+          role={clickable ? 'button' : undefined}
+          tabindex={clickable ? 0 : undefined}
+          aria-label={clickable ? `String ${s + 1}, fret ${f}, note ${note}` : undefined}
+          aria-hidden={clickable ? undefined : true}
           onmouseenter={() => (hovered = { string: s, fret: f })}
           onmouseleave={() => (hovered = null)}
-          aria-hidden="true"
+          onclick={clickable ? () => onSelect?.(s, f, note) : undefined}
+          onkeydown={clickable
+            ? (e) => (e.key === 'Enter' || e.key === ' ') && onSelect?.(s, f, note)
+            : undefined}
         >
           <rect
             x={midX(f) - HIT_SIZE / 2}
@@ -175,16 +193,20 @@
               cx={midX(f)}
               cy={stringY(s)}
               r={revealed ? REVEAL_RADIUS : DOT_RADIUS}
-              fill={revealed
+              fill={fb === 'correct'
                 ? '#5cd97f'
-                : isHovered
-                  ? '#ffcf5c'
-                  : isOpen
-                    ? '#7ec0ff'
-                    : '#222'}
-              fill-opacity={isHovered || revealed ? 1 : 0.85}
+                : fb === 'wrong'
+                  ? '#ff5c5c'
+                  : revealed
+                    ? '#5cd97f'
+                    : isHovered
+                      ? '#ffcf5c'
+                      : isOpen
+                        ? '#7ec0ff'
+                        : '#222'}
+              fill-opacity={isHovered || revealed || fb ? 1 : 0.85}
               stroke="#0a0a0a"
-              stroke-width={revealed ? 2.5 : 1.5}
+              stroke-width={revealed || fb ? 2.5 : 1.5}
             />
             <text
               class="note-label"
@@ -192,7 +214,7 @@
               x={midX(f)}
               y={stringY(s) + (revealed ? 10 : 6)}
               text-anchor="middle"
-              fill={revealed || isHovered ? '#222' : '#fff'}
+              fill={revealed || fb || isHovered ? '#222' : '#fff'}
             >
               {note}
             </text>
@@ -236,5 +258,8 @@
   .note-label.reveal {
     font-size: 28px;
     font-weight: 800;
+  }
+  g.clickable {
+    cursor: pointer;
   }
 </style>
