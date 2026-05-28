@@ -33,6 +33,39 @@ export function midiAtFret(stringIdx: number, openNote: Note, fret: number): num
   return midiOf(openNote, octave) + fret;
 }
 
+/* ─── Piano helpers ──────────────────────────────────────────────────── */
+
+/** Piano range used by the trainer keyboard: C3 → C6 (3 octaves). */
+export const PIANO_LOW_MIDI = 48;
+export const PIANO_HIGH_MIDI = 84;
+
+/** Pitch classes that are black keys (1=C#, 3=D#, 6=F#, 8=G#, 10=A#). */
+const BLACK_PCS = new Set([1, 3, 6, 8, 10]);
+
+export const isBlackKey = (midi: number) => BLACK_PCS.has(midi % 12);
+
+/** Note name for a MIDI number. */
+export const noteForMidi = (midi: number): Note => NOTES[midi % 12];
+
+/** A random note from the chromatic scale, used as the piano-mode target. */
+export function pickRandomNote(): Note {
+  return NOTES[Math.floor(Math.random() * 12)];
+}
+
+/** Every MIDI key in [low, high] that matches `note`. */
+export function pianoKeysForNote(
+  note: Note,
+  low = PIANO_LOW_MIDI,
+  high = PIANO_HIGH_MIDI,
+): number[] {
+  const pc = NOTES.indexOf(note);
+  const result: number[] = [];
+  for (let m = low; m <= high; m++) {
+    if (m % 12 === pc) result.push(m);
+  }
+  return result;
+}
+
 export const TUNING_PRESETS: { name: string; tuning: Note[] }[] = [
   { name: 'Standard (6)', tuning: ['E', 'B', 'G', 'D', 'A', 'E'] },
   { name: 'Drop D (6)', tuning: ['E', 'B', 'G', 'D', 'A', 'D'] },
@@ -48,14 +81,14 @@ export function noteAt(openNote: Note, fret: number): Note {
   return NOTES[(NOTES.indexOf(openNote) + fret) % 12];
 }
 
-/** Pick a random (string, note) target reachable on frets 1..frets. */
+/** Pick a random (string, note, fret) target. `fret` is the specific picked position. */
 export function pickRandomTarget(
   tuning: Note[],
   frets: number,
-): { stringIdx: number; note: Note } {
+): { stringIdx: number; fret: number; note: Note } {
   const stringIdx = Math.floor(Math.random() * tuning.length);
   const fret = 1 + Math.floor(Math.random() * frets);
-  return { stringIdx, note: noteAt(tuning[stringIdx], fret) };
+  return { stringIdx, fret, note: noteAt(tuning[stringIdx], fret) };
 }
 
 /** All frets in 1..maxFret where `target` sounds on a string tuned to `openNote`. */

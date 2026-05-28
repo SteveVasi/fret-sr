@@ -1,29 +1,38 @@
 <script lang="ts">
   import type { TrainingSession } from './training.svelte';
-  import type { Note } from './music';
   import Button from './Button.svelte';
+  import { settings } from './settings.svelte';
 
   type Props = {
     session: TrainingSession;
-    tuning: Note[];
     onStart: () => void;
   };
 
-  let { session, tuning, onStart }: Props = $props();
+  let { session, onStart }: Props = $props();
 
+  const isCrossMode = $derived(settings.mode === 'fret-to-piano');
+  const stringIdx = $derived(session.target?.stringIdx);
   const openNote = $derived(
-    session.target ? tuning[session.target.stringIdx] : null,
+    stringIdx !== undefined ? settings.tuning[stringIdx] : null,
   );
 </script>
 
 <div class="wrap">
   {#if session.status === 'idle'}
     <Button variant="primary" size="lg" onclick={onStart}>Start training</Button>
+  {:else if isCrossMode}
+    <!-- Question lives on the fretboard marker; nothing to show here.
+         When revealing, the fretboard marker itself shows the note name. -->
+    {#if session.status === 'reveal' && session.target}
+      <div class="reveal-hint">
+        {session.target.note}
+      </div>
+    {/if}
   {:else if session.target}
     <div class="target">
       <div class="note">{session.target.note}</div>
       <div class="meta">
-        on string <strong>{session.target.stringIdx + 1}</strong>
+        on string <strong>{(stringIdx ?? 0) + 1}</strong>
         <span class="open">({openNote})</span>
       </div>
     </div>
@@ -75,5 +84,12 @@
     line-height: 1;
     letter-spacing: -0.02em;
     margin-left: 0.4rem;
+  }
+  .reveal-hint {
+    font-size: 4rem;
+    font-weight: 800;
+    color: #5cd97f;
+    line-height: 1;
+    letter-spacing: -0.02em;
   }
 </style>

@@ -59,53 +59,80 @@
     </header>
 
     <section>
-      <div class="row">
-        <span>Frets</span>
-        <span class="value">{settings.frets}</span>
+      <h3>Training mode</h3>
+      <div class="mode-switch">
+        <button
+          class="mode"
+          class:active={settings.mode === 'guitar'}
+          onclick={() => (settings.mode = 'guitar')}
+        >Guitar</button>
+        <button
+          class="mode"
+          class:active={settings.mode === 'fret-to-piano'}
+          onclick={() => (settings.mode = 'fret-to-piano')}
+        >Fret → Piano</button>
       </div>
-      <input
-        type="range"
-        aria-label="Frets"
-        min={MIN_FRETS}
-        max={MAX_FRETS}
-        value={settings.frets}
-        oninput={(e) => (settings.frets = +e.currentTarget.value)}
-      />
+      <p class="hint-text">
+        {#if settings.mode === 'fret-to-piano'}
+          A position lights up on the fretboard. Find the matching note on the piano.
+        {:else}
+          A note + string is shown. Find it on the fretboard.
+        {/if}
+      </p>
     </section>
 
-    <section>
-      <div class="row">
-        <span>Strings</span>
-        <span class="value">{settings.tuning.length}</span>
-      </div>
-      <input
-        type="range"
-        aria-label="String count"
-        min={MIN_STRINGS}
-        max={MAX_STRINGS}
-        value={settings.tuning.length}
-        oninput={(e) => setStringCount(+e.currentTarget.value)}
-      />
-    </section>
+    {#if settings.mode === 'guitar'}
+      <section>
+        <div class="row">
+          <span>Frets</span>
+          <span class="value">{settings.frets}</span>
+        </div>
+        <input
+          type="range"
+          aria-label="Frets"
+          min={MIN_FRETS}
+          max={MAX_FRETS}
+          value={settings.frets}
+          oninput={(e) => (settings.frets = +e.currentTarget.value)}
+        />
+      </section>
+    {/if}
 
-    <section>
-      <h3>Tuning <span class="hint">high → low</span></h3>
-      <div class="tuning-grid">
-        {#each settings.tuning as note, i}
-          <label class="string-row">
-            <span class="string-idx">{i + 1}</span>
-            <select
-              value={note}
-              onchange={(e) => setStringNote(i, e.currentTarget.value as Note)}
-            >
-              {#each NOTES as n}
-                <option value={n}>{n}</option>
-              {/each}
-            </select>
-          </label>
-        {/each}
-      </div>
-    </section>
+    {#if settings.mode === 'guitar'}
+      <section>
+        <div class="row">
+          <span>Strings</span>
+          <span class="value">{settings.tuning.length}</span>
+        </div>
+        <input
+          type="range"
+          aria-label="String count"
+          min={MIN_STRINGS}
+          max={MAX_STRINGS}
+          value={settings.tuning.length}
+          oninput={(e) => setStringCount(+e.currentTarget.value)}
+        />
+      </section>
+
+      <section>
+        <h3>Tuning <span class="hint">high → low</span></h3>
+        <div class="tuning-grid">
+          {#each settings.tuning as note, i}
+            <label class="string-row">
+              <span class="string-idx">{i + 1}</span>
+              <select
+                value={note}
+                onchange={(e) => setStringNote(i, e.currentTarget.value as Note)}
+              >
+                {#each NOTES as n}
+                  <option value={n}>{n}</option>
+                {/each}
+              </select>
+            </label>
+          {/each}
+        </div>
+      </section>
+    {/if}
 
     <section>
       <div class="row">
@@ -158,16 +185,18 @@
       </label>
     </section>
 
-    <section>
-      <h3>Presets</h3>
-      <div class="presets">
-        {#each TUNING_PRESETS as preset}
-          <Button variant="secondary" size="sm" onclick={() => applyPreset(preset.tuning)}>
-            <span class="preset-name">{preset.name}</span>
-          </Button>
-        {/each}
-      </div>
-    </section>
+    {#if settings.mode === 'guitar'}
+      <section>
+        <h3>Presets</h3>
+        <div class="presets">
+          {#each TUNING_PRESETS as preset}
+            <Button variant="secondary" size="sm" onclick={() => applyPreset(preset.tuning)}>
+              <span class="preset-name">{preset.name}</span>
+            </Button>
+          {/each}
+        </div>
+      </section>
+    {/if}
   </div>
 {/if}
 
@@ -279,9 +308,35 @@
     cursor: pointer;
   }
   .hint-text {
-    margin: 0.4rem 0 0 1.85rem;
+    margin: 0.4rem 0 0 0;
     font-size: 0.8rem;
     color: #888;
     line-height: 1.3;
+  }
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .mode {
+    background: #2a2a30;
+    color: #aaa;
+    border: 1px solid #3a3a42;
+    border-radius: 8px;
+    padding: 0.55rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .mode:hover {
+    background: #34343c;
+    color: #ddd;
+  }
+  .mode.active {
+    background: #7ec0ff;
+    border-color: #7ec0ff;
+    color: #0a1828;
   }
 </style>

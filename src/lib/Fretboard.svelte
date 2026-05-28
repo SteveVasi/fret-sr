@@ -1,8 +1,9 @@
 <script lang="ts">
   import { type Note, STANDARD_TUNING, noteAt } from './music';
 
-  type RevealCell = { string: number; fret: number };
-  type Feedback = { string: number; fret: number; kind: 'correct' | 'wrong' };
+  type RevealCell = { mode: 'guitar'; string: number; fret: number };
+  type Feedback = { mode: 'guitar'; kind: 'correct' | 'wrong'; string: number; fret: number };
+  type Mark = { string: number; fret: number };
 
   type Props = {
     frets?: number;
@@ -13,6 +14,10 @@
     highlightString?: number | null;
     reveal?: RevealCell[] | null;
     feedback?: Feedback | null;
+    /** A target position to highlight (used by cross-instrument modes). */
+    mark?: Mark | null;
+    /** Whether the marked position's note label should be revealed. */
+    showMarkLabel?: boolean;
     onSelect?: (stringIdx: number, fret: number, note: Note) => void;
   };
 
@@ -28,6 +33,8 @@
     highlightString = null,
     reveal = null,
     feedback = null,
+    mark = null,
+    showMarkLabel = false,
     onSelect,
   }: Props = $props();
 
@@ -222,6 +229,26 @@
         </g>
       {/each}
     {/each}
+
+    <!-- Target marker (cross-instrument modes) — drawn last so it sits on top -->
+    {#if mark}
+      {@const mx = midX(mark.fret)}
+      {@const my = stringY(mark.string)}
+      {@const markNote = noteAt(tuning[mark.string], mark.fret)}
+      <circle cx={mx} cy={my} r="36" fill="#ffd87a" fill-opacity="0.22" />
+      <circle cx={mx} cy={my} r="26" fill="#ffd87a" fill-opacity="0.45" />
+      <circle cx={mx} cy={my} r="18" fill="#ffd87a" stroke="#0a0a0a" stroke-width="2" />
+      {#if showMarkLabel}
+        <text
+          class="mark-label"
+          x={mx}
+          y={my + 6}
+          text-anchor="middle"
+        >
+          {markNote}
+        </text>
+      {/if}
+    {/if}
   </svg>
 </div>
 
@@ -258,6 +285,12 @@
   .note-label.reveal {
     font-size: 28px;
     font-weight: 800;
+  }
+  .mark-label {
+    font-size: 18px;
+    font-weight: 800;
+    fill: #1a1a1a;
+    pointer-events: none;
   }
   g.clickable {
     cursor: pointer;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Fretboard from './lib/Fretboard.svelte';
+  import Piano from './lib/Piano.svelte';
   import SettingsPanel from './lib/SettingsPanel.svelte';
   import TrainingHUD from './lib/TrainingHUD.svelte';
   import TargetDisplay from './lib/TargetDisplay.svelte';
@@ -7,15 +8,50 @@
   import { settings } from './lib/settings.svelte';
   import { TrainingSession } from './lib/training.svelte';
   import { GEAR_ICON } from './lib/icons';
+  import type { Note } from './lib/music';
 
   let settingsOpen = $state(false);
   const session = new TrainingSession(settings);
 
-  const onFretboardSelect = $derived(
-    settings.clickMode && session.status === 'asking'
-      ? (s: number, f: number, n: Parameters<typeof session.answer>[2]) =>
-          session.answer(s, f, n)
+  // Slice the union-typed session state into per-instrument variants so each
+  // child component only sees what's relevant to it.
+  const guitarFeedback = $derived(
+    session.feedback?.mode === 'guitar' ? session.feedback : null,
+  );
+  const pianoFeedback = $derived(
+    session.feedback?.mode === 'piano' ? session.feedback : null,
+  );
+  const guitarReveal = $derived(
+    session.reveal?.filter((r) => r.mode === 'guitar') ?? null,
+  );
+  const pianoReveal = $derived(
+    session.reveal?.filter((r) => r.mode === 'piano') ?? null,
+  );
+
+  const isCrossMode = $derived(settings.mode === 'fret-to-piano');
+  const acceptingAnswer = $derived(
+    settings.clickMode && session.status === 'asking',
+  );
+
+  // In guitar mode the fretboard is the input. In fret-to-piano the piano is.
+  const onFretSelect = $derived(
+    !isCrossMode && acceptingAnswer
+      ? (s: number, f: number, n: Note) =>
+          session.answer({ mode: 'guitar', string: s, fret: f, note: n })
       : undefined,
+  );
+  const onPianoSelect = $derived(
+    isCrossMode && acceptingAnswer
+      ? (midi: number, note: Note) =>
+          session.answer({ mode: 'piano', midi, note })
+      : undefined,
+  );
+
+  // Marker on the fretboard for cross-instrument mode.
+  const fretMark = $derived(
+    isCrossMode && session.target
+      ? { string: session.target.stringIdx, fret: session.target.fret }
+      : null,
   );
 </script>
 
@@ -44,15 +80,29 @@
     tuning={settings.tuning}
     showNotes={settings.showNotes}
     hoverHints={settings.showHoverHints}
-    highlightString={session.status !== 'idle' ? (session.target?.stringIdx ?? null) : null}
-    reveal={session.reveal}
-    feedback={session.feedback}
-    onSelect={onFretboardSelect}
+    highlightString={!isCrossMode && session.status !== 'idle'
+      ? (session.target?.stringIdx ?? null)
+      : null}
+    reveal={guitarReveal}
+    feedback={guitarFeedback}
+    mark={fretMark}
+    showMarkLabel={session.status === 'reveal'}
+    onSelect={onFretSelect}
   />
+
+  {#if isCrossMode}
+    <Piano
+      showNotes={settings.showNotes}
+      hoverHints={settings.showHoverHints}
+      reveal={pianoReveal}
+      feedback={pianoFeedback}
+      onSelect={onPianoSelect}
+    />
+  {/if}
 
   <TrainingHUD {session} />
 
-  <TargetDisplay {session} tuning={settings.tuning} onStart={() => session.start()} />
+  <TargetDisplay {session} onStart={() => session.start()} />
 
   <SettingsPanel open={settingsOpen} onClose={() => (settingsOpen = false)} />
 </main>
