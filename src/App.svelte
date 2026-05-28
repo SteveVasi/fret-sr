@@ -61,8 +61,14 @@
     <div class="controls">
       <label>
         <input type="checkbox" bind:checked={settings.showNotes} />
-        Show notes
+        {isCrossMode ? 'Fretboard notes' : 'Show notes'}
       </label>
+      {#if isCrossMode}
+        <label>
+          <input type="checkbox" bind:checked={settings.showPianoNotes} />
+          Piano notes
+        </label>
+      {/if}
       {#if session.status !== 'idle'}
         <Button variant="danger" size="sm" onclick={() => session.stop()}>Stop</Button>
       {/if}
@@ -92,7 +98,7 @@
 
   {#if isCrossMode}
     <Piano
-      showNotes={settings.showNotes}
+      showNotes={settings.showPianoNotes}
       hoverHints={settings.showHoverHints}
       reveal={pianoReveal}
       feedback={pianoFeedback}
